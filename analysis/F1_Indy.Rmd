@@ -1,0 +1,108 @@
+---
+title: "F1_Indy"
+author: "Shane D"
+date: '2023-07-06'
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+F1_Indy_data <- read_csv("F1_Indy_Data_new.csv")
+View(F1_Indy_data)
+
+F1_Indy_data %>% filter(Type=="Indy")->Indy_set
+F1_Indy_data %>% filter(Type=="F1")->F1_set
+
+library(stargazer)
+(table1 <- summary(as.factor(F1_set$Country)))
+(table2 <- summary(as.factor(Indy_set$Country)))
+(table3 <- summary(as.factor(F1_set$Engine)))
+(table4 <- summary(as.factor(Indy_set$Engine)))
+(table5 <- summary(as.factor(F1_set$Chassis)))
+(table6 <- summary(as.factor(Indy_set$Chassis)))
+
+
+ggplot(Indy_set,aes(x=factor(Engine)))+geom_bar()
+
+ggplot(F1_set,aes(x=factor(Engine)))+geom_bar()
+
+ggplot(Indy_set,aes(x=factor(Chassis)))+geom_bar()
+
+ggplot(F1_set,aes(x=factor(Chassis)))+geom_bar()
+
+
+# F1_Indy_data %>% mutate(Engine_Type = as.factor(Engine)) %>% group_by(Type) %>% mutate(Count=-> F1_Indy_data
+# ggplot(data=F1_Indy_data,aes(x=Engine_Type),y=)+geom_bar(stat="identity")
+# df %>% 
+#   mutate(month = format(project_submitted_datetime, "%b-%Y")) %>%
+#   group_by(month) %>%
+#   summarise(Count = n()) %>%
+#   ggplot(aes(x = month, y = Count)) +
+#   geom_bar(stat = "identity") +
+#   theme(axis.text.x=element_text(angle = -90, hjust = 0))
+
+
+stargazer(table1)
+stargazer(table2)
+stargazer(table3)
+stargazer(table4)
+stargazer(table5)
+stargazer(table6)
+```
+
+```{r}
+F1_Indy_data %>% mutate(average_speed = 3.426*3600/Time) -> F1_Indy_data
+F1_Indy_data %>% group_by(F1) %>% summarise(mean_speed = mean(average_speed))
+
+ggplot(F1_Indy_data, aes(x=average_speed, group=Type,fill=Type)) + geom_density()
+```
+
+```{r}
+(speed_diff1 <- lm(average_speed~F1,data=F1_Indy_data))
+
+(speed_diff2 <- lm(average_speed~F1+factor(Round),data=F1_Indy_data))
+
+(speed_diff3 <- lm(average_speed~F1+factor(Round)+Races,data=F1_Indy_data))
+
+(speed_diff4 <- lm(average_speed~F1+factor(Round)+Races+I(Races^2),data=F1_Indy_data))
+
+(speed_diff5 <- lm(average_speed~F1+factor(Round)+factor(Name),data=F1_Indy_data))
+
+
+library(lme4)
+
+(speed_diff6 <- lmer(average_speed~F1+(1|Engine) + (1|Chassis) + factor(Round)+Races+I(Races^2),data=F1_Indy_data))
+
+
+#To do: Read about the differences in how Indy and F1 cars are made.  Indy's have standard chassis and 
+# F1 have custom chassis.  F1 is designed for grip and handling and Indy for straight-line speed.  Is there a 
+# way to quantify the handling difficulty of the COTA track compared to other F1 and other Indy tracks.  
+# I think there were no overlapping drivers, but that would be nice if there were (direct comparison of the
+#cars)
+
+
+stargazer(speed_diff1, speed_diff2,speed_diff3,speed_diff4, type='latex', summary=FALSE)
+
+stargazer(speed_diff5, type='latex', summary=FALSE)
+stargazer(speed_diff6, type='latex', summary=FALSE)
+
+
+
+# library(lme4)
+# 
+# (speed_diff4 <- lmer(average_speed~F1+(1|Engine) + (1|Chassis) + factor(Round),data=F1_Indy_data))
+# summary(speed_diff4)
+# 
+# 
+# stargazer(speed_diff4, type='latex', summary=FALSE)
+
+```
+
+
